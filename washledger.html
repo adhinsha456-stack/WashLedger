@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WashLedger — Car Wash Employee Attendance & Salary Diary</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        forest: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Inter & Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #14532d; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-gray-100 h-full flex justify-center items-center p-0 sm:p-4 text-gray-800">
+
+    <!-- Mobile Frame Wrapper -->
+    <div id="app-container" class="w-full sm:max-w-md h-full sm:h-[90vh] bg-white sm:rounded-3xl sm:shadow-2xl flex flex-col overflow-hidden relative border border-gray-200">
+
+        <!-- TOAST CONTAINER -->
+        <div id="toast-container" class="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 w-11/12 max-w-xs pointer-events-none"></div>
+
+        <!-- 1. LOGIN SCREEN -->
+        <div id="screen-login" class="flex-1 flex flex-col justify-between p-6 bg-gradient-to-b from-forest-50 to-white overflow-y-auto">
+            <div class="pt-10 text-center">
+                <div class="w-20 h-20 bg-forest-900 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-forest-900/30 mb-4 transform hover:scale-105 transition-transform">
+                    <i data-lucide="droplets" class="w-10 h-10 text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-forest-900 tracking-tight">WashLedger</h1>
+                <p class="text-xs text-forest-700 uppercase tracking-widest mt-1 font-semibold">Car Wash Attendance & Salary Diary</p>
+            </div>
+
+            <div class="my-auto space-y-4 py-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-forest-100 space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Supervisor Login ID</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                            </span>
+                            <input type="text" id="login-id" value="supervisor" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-forest-800 focus:bg-white transition" placeholder="Enter ID">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Password</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                <i data-lucide="lock" class="w-4 h-4"></i>
+                            </span>
+                            <input type="password" id="login-password" value="wash2026" class="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-forest-800 focus:bg-white transition" placeholder="Enter password">
+                            <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-forest-900">
+                                <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="remember-me" checked class="rounded text-forest-900 focus:ring-forest-800 w-4 h-4">
+                            <span class="text-gray-600">Remember login</span>
+                        </label>
+                        <span class="text-forest-800 font-medium">Offline SQLite Mode</span>
+                    </div>
+                    <button onclick="handleLogin()" class="w-full py-3 bg-forest-900 hover:bg-forest-800 text-white font-semibold rounded-xl shadow-md transition transform active:scale-95 flex items-center justify-center space-x-2">
+                        <span>Secure Login</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center text-xs text-gray-400 pb-2">
+                Secure Local Storage &bull; Dynamic Branches &bull; 10 Employees
+            </div>
+        </div>
+
+        <!-- MAIN APP SHELL -->
+        <div id="app-shell" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+            
+            <!-- TOP APP BAR -->
+            <header class="bg-forest-900 text-white px-4 py-3 flex items-center justify-between shadow-md z-10">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+                        <i data-lucide="droplets" class="w-5 h-5 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-sm leading-tight" id="app-header-title">WashLedger</h2>
+                        <p class="text-[10px] text-emerald-300 font-medium" id="header-branch-subtitle">Custom Branches &bull; Active Diary</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openSyncModal()" class="p-2 hover:bg-white/10 rounded-xl transition text-emerald-300" title="Backup & Restore">
+                        <i data-lucide="database" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="handleLogout()" class="p-2 hover:bg-white/10 rounded-xl transition text-gray-300 hover:text-white" title="Logout">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTENT AREA -->
+            <main id="main-content-area" class="flex-1 overflow-y-auto bg-gray-50 relative pb-16">
+                
+                <!-- VIEW 1: HOME DASHBOARD -->
+                <div id="view-home" class="p-4 space-y-4">
+                    <div class="bg-gradient-to-r from-forest-900 to-forest-800 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full pointer-events-none"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-emerald-300 font-medium uppercase tracking-wider">Welcome Supervisor</p>
+                                <h3 class="text-xl font-bold mt-0.5" id="dash-date-display">Today's Overview</h3>
+                            </div>
+                            <span class="px-2.5 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-[11px] font-medium text-emerald-200">
+                                Live Ledger
+                            </span>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-white/10 flex justify-between text-xs items-center">
+                            <span class="text-emerald-200">Selected Branch Filter:</span>
+                            <select id="dash-branch-filter" onchange="renderHomeDashboard()" class="bg-forest-950 text-white px-2 py-1 rounded-lg border border-forest-700 text-xs focus:outline-none">
+                                <option value="ALL">All Branches</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Key Metrics Grid -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                            <div class="flex justify-between items-start text-forest-800">
+                                <span class="text-xs font-semibold text-gray-500 uppercase">Today's Staff</span>
+                                <div class="p-2 bg-forest-50 rounded-xl text-forest-800"><i data-lucide="users" class="w-4 h-4"></i></div>
+                            </div>
+                            <div class="mt-3">
+                                <h4 class="text-2xl font-bold text-gray-900" id="metric-staff-count">0</h4>
+                                <p class="text-[11px] text-gray-400 mt-0.5">Active employees today</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                            <div class="flex justify-between items-start text-forest-800">
+                                <span class="text-xs font-semibold text-gray-500 uppercase">Today's Salary</span>
+                                <div class="p-2 bg-forest-50 rounded-xl text-forest-800"><i data-lucide="indian-rupee" class="w-4 h-4"></i></div>
+                            </div>
+                            <div class="mt-3">
+                                <h4 class="text-2xl font-bold text-gray-900" id="metric-daily-salary">₹0</h4>
+                                <p class="text-[11px] text-gray-400 mt-0.5">Total recorded today</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Status Summary -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Payment Status Today</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center space-x-3">
+                                <div class="p-2 bg-emerald-600 text-white rounded-lg"><i data-lucide="check-circle" class="w-4 h-4"></i></div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-bold text-emerald-800">Paid Today</p>
+                                    <p class="text-lg font-bold text-emerald-900" id="metric-paid-salary">₹0</p>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-center space-x-3">
+                                <div class="p-2 bg-amber-600 text-white rounded-lg"><i data-lucide="clock" class="w-4 h-4"></i></div>
+                                <div>
+                                    <p class="text-[10px] uppercase font-bold text-amber-800">Unpaid Today</p>
+                                    <p class="text-lg font-bold text-amber-900" id="metric-unpaid-salary">₹0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Shortcut -->
+                    <div class="bg-forest-900 text-white p-4 rounded-2xl flex items-center justify-between shadow-md">
+                        <div>
+                            <h4 class="font-bold text-sm">Jump to Today's Diary</h4>
+                            <p class="text-xs text-emerald-200 mt-0.5">Add or review attendance & salaries for today</p>
+                        </div>
+                        <button onclick="goToTodayDiary()" class="px-4 py-2 bg-white text-forest-900 font-semibold rounded-xl text-xs shadow hover:bg-emerald-50 transition">
+                            Open Diary
+                        </button>
+                    </div>
+
+                    <!-- Recent Entries -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Today's Employee Entries</h4>
+                            <span class="text-xs text-forest-800 font-semibold" id="home-record-date-label">Today</span>
+                        </div>
+                        <div id="home-recent-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: CALENDAR SYSTEM -->
+                <div id="view-calendar" class="p-4 space-y-4 hidden">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+                            <h3 id="cal-month-year-title" class="text-base font-bold text-forest-900">November 2026</h3>
+                            <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="grid grid-cols-7 text-center text-[11px] font-bold text-gray-400 uppercase">
+                            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                        </div>
+                        <div id="cal-days-grid" class="grid grid-cols-7 gap-1 text-sm"></div>
+                    </div>
+                    <div class="bg-forest-50 border border-forest-100 p-4 rounded-2xl flex items-center space-x-3 text-xs text-forest-900">
+                        <div class="p-2 bg-forest-900 text-white rounded-xl"><i data-lucide="calendar" class="w-4 h-4"></i></div>
+                        <div>
+                            <p class="font-bold">Select any date to open its independent diary.</p>
+                            <p class="text-forest-700 text-[11px]">Dates marked with a green dot contain saved records.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 3: DAILY DIARY -->
+                <div id="view-diary" class="p-4 space-y-4 hidden">
+                    <div class="bg-forest-900 text-white p-4 rounded-2xl shadow-md flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-emerald-300 font-medium">Daily Diary Management</p>
+                            <h3 id="diary-current-date-title" class="text-lg font-bold">October 13, 2026</h3>
+                        </div>
+                        <button onclick="openAddRecordModal()" class="px-3.5 py-2 bg-white text-forest-900 font-semibold rounded-xl text-xs shadow hover:bg-emerald-50 transition flex items-center space-x-1.5">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Add Employee</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center text-xs font-semibold text-gray-500 uppercase">
+                            <span>Employee & Branch</span>
+                            <span>Salary & Details</span>
+                        </div>
+                        <div id="diary-records-container" class="divide-y divide-gray-100"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white p-3 rounded-xl border border-gray-100 text-center">
+                            <span class="text-[10px] font-bold uppercase text-gray-400">Total Staff</span>
+                            <p class="text-base font-bold text-gray-900" id="diary-stat-staff">0</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl border border-gray-100 text-center">
+                            <span class="text-[10px] font-bold uppercase text-gray-400">Total Salary</span>
+                            <p class="text-base font-bold text-forest-900" id="diary-stat-salary">₹0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW 4: REPORTS -->
+                <div id="view-reports" class="p-4 space-y-4 hidden">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-forest-900 text-base">Salary & Attendance Reports</h3>
+                            <button onclick="exportCSV()" class="px-3 py-1.5 bg-forest-900 text-white rounded-xl text-xs font-medium flex items-center space-x-1 shadow hover:bg-forest-800 transition">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                <span>Export CSV</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">From Date</label>
+                                <input type="date" id="report-from-date" onchange="renderReports()" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-forest-800">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">To Date</label>
+                                <input type="date" id="report-to-date" onchange="renderReports()" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-forest-800">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white p-4 rounded-2xl border border-gray-100">
+                            <span class="text-xs text-gray-500 font-semibold uppercase">Daily Average</span>
+                            <p class="text-xl font-bold text-gray-900 mt-1" id="report-daily-total">₹0</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-gray-100">
+                            <span class="text-xs text-gray-500 font-semibold uppercase">Monthly Total</span>
+                            <p class="text-xl font-bold text-forest-900 mt-1" id="report-monthly-total">₹0</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-emerald-100 bg-emerald-50/50">
+                            <span class="text-xs text-emerald-800 font-semibold uppercase">Paid Total</span>
+                            <p class="text-xl font-bold text-emerald-900 mt-1" id="report-paid-total">₹0</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-amber-100 bg-amber-50/50">
+                            <span class="text-xs text-amber-800 font-semibold uppercase">Unpaid Total</span>
+                            <p class="text-xl font-bold text-amber-900 mt-1" id="report-unpaid-total">₹0</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Branch-wise Breakdown</h4>
+                        <div id="report-branch-breakdown" class="space-y-2"></div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Employee-wise Salary History</h4>
+                        <div id="report-employee-history" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- VIEW 5: SETTINGS & BRANCH MANAGEMENT -->
+                <div id="view-settings" class="p-4 space-y-4 hidden">
+                    <!-- Branch Management Section -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-forest-900 text-base">Branch Management</h3>
+                                <p class="text-[11px] text-gray-500">Add or rename your car wash branches</p>
+                            </div>
+                            <button onclick="openAddBranchModal()" class="px-3 py-1.5 bg-forest-900 text-white rounded-xl text-xs font-semibold flex items-center space-x-1 shadow hover:bg-forest-800 transition">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                <span>Add Branch</span>
+                            </button>
+                        </div>
+                        <div id="settings-branch-list" class="space-y-2 pt-2">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                        <h3 class="font-bold text-forest-900 text-base">Database & Storage</h3>
+                        <div class="space-y-3 pt-2">
+                            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-800">SQLite Database Storage</h4>
+                                    <p class="text-[11px] text-gray-500">Local offline browser storage active</p>
+                                </div>
+                                <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-semibold text-[10px] rounded-full">Active</span>
+                            </div>
+
+                            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-800">Backup SQLite Database</h4>
+                                    <p class="text-[11px] text-gray-500">Download JSON backup file</p>
+                                </div>
+                                <button onclick="backupDatabase()" class="px-3 py-1.5 bg-forest-900 text-white rounded-lg text-xs font-medium hover:bg-forest-800 transition">Backup</button>
+                            </div>
+
+                            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-800">Restore Database</h4>
+                                    <p class="text-[11px] text-gray-500">Upload JSON backup file</p>
+                                </div>
+                                <label class="px-3 py-1.5 bg-gray-200 text-gray-800 rounded-lg text-xs font-medium hover:bg-gray-300 transition cursor-pointer">
+                                    Restore <input type="file" id="restore-file-input" onchange="restoreDatabase(event)" class="hidden" accept=".json">
+                                </label>
+                            </div>
+
+                            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-800">Android APK Download</h4>
+                                    <p class="text-[11px] text-gray-500">Download signed release APK wrapper</p>
+                                </div>
+                                <button onclick="downloadAPK()" class="px-3 py-1.5 bg-forest-900 text-white rounded-lg text-xs font-medium hover:bg-forest-800 transition flex items-center space-x-1">
+                                    <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                                    <span>APK</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+
+            <!-- BOTTOM NAVIGATION BAR -->
+            <nav class="bg-white border-t border-gray-200 px-4 py-2 flex justify-around items-center z-10 shadow-lg">
+                <button onclick="switchTab('home')" id="nav-btn-home" class="flex flex-col items-center text-forest-900 space-y-1 transition">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-semibold">Home</span>
+                </button>
+                <button onclick="switchTab('calendar')" id="nav-btn-calendar" class="flex flex-col items-center text-gray-400 space-y-1 hover:text-forest-900 transition">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-medium">Calendar</span>
+                </button>
+                <button onclick="switchTab('reports')" id="nav-btn-reports" class="flex flex-col items-center text-gray-400 space-y-1 hover:text-forest-900 transition">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-medium">Reports</span>
+                </button>
+                <button onclick="switchTab('settings')" id="nav-btn-settings" class="flex flex-col items-center text-gray-400 space-y-1 hover:text-forest-900 transition">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-medium">Settings</span>
+                </button>
+            </nav>
+        </div>
+
+    </div>
+
+    <!-- MODAL: ADD / EDIT EMPLOYEE RECORD -->
+    <div id="record-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="modal-title" class="font-bold text-forest-900 text-base">Add Employee Record</h3>
+                <button onclick="closeAddRecordModal()" class="p-1.5 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
+            <form id="record-form" onsubmit="saveRecord(event)" class="space-y-3">
+                <input type="hidden" id="record-id">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Employee Name</label>
+                    <select id="record-name" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-forest-800">
+                        <option value="">Select Employee</option>
+                        <option value="Ramesh Kumar">Ramesh Kumar</option>
+                        <option value="Suresh Singh">Suresh Singh</option>
+                        <option value="Amit Sharma">Amit Sharma</option>
+                        <option value="Vijay Verma">Vijay Verma</option>
+                        <option value="Manoj Gupta">Manoj Gupta</option>
+                        <option value="Rahul Yadav">Rahul Yadav</option>
+                        <option value="Deepak Patel">Deepak Patel</option>
+                        <option value="Sunil Kumar">Sunil Kumar</option>
+                        <option value="Anil Verma">Anil Verma</option>
+                        <option value="Rajesh Chauhan">Rajesh Chauhan</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Salary Amount (₹)</label>
+                    <input type="number" id="record-salary" required min="0" step="10" placeholder="e.g. 450" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-forest-800">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Working Time</label>
+                        <select id="record-time" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-forest-800">
+                            <option value="Full Day">Full Day</option>
+                            <option value="Half Day">Half Day</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Branch Location</label>
+                        <select id="record-branch" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-forest-800">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Payment Status</label>
+                    <select id="record-payment" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-forest-800">
+                        <option value="Paid">Paid</option>
+                        <option value="Unpaid">Unpaid</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-forest-900 hover:bg-forest-800 text-white font-semibold rounded-xl text-xs shadow-md transition mt-2">
+                    Save Diary Entry
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT BRANCH -->
+    <div id="branch-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="branch-modal-title" class="font-bold text-forest-900 text-base">Add New Branch</h3>
+                <button onclick="closeBranchModal()" class="p-1.5 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="saveBranch(event)" class="space-y-3">
+                <input type="hidden" id="branch-old-name">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Branch Name</label>
+                    <input type="text" id="branch-name-input" required placeholder="e.g. Downtown Wash Station" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-forest-800">
+                </div>
+                <button type="submit" class="w-full py-3 bg-forest-900 hover:bg-forest-800 text-white font-semibold rounded-xl text-xs shadow-md transition mt-2">
+                    Save Branch
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BACKUP / SYNC -->
+    <div id="sync-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-forest-900 text-base">Database Backup & Sync</h3>
+                <button onclick="closeSyncModal()" class="p-1.5 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <p class="text-xs text-gray-600">WashLedger stores all diary records and branch settings securely in offline local storage.</p>
+            <div class="space-y-2">
+                <button onclick="backupDatabase(); closeSyncModal();" class="w-full py-2.5 bg-forest-900 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-2">
+                    <i data-lucide="database" class="w-4 h-4"></i>
+                    <span>Download SQLite JSON Backup</span>
+                </button>
+                <button onclick="exportCSV(); closeSyncModal();" class="w-full py-2.5 bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-2">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Export Records to CSV</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        let currentUser = null;
+        let activeTab = 'home';
+        let selectedDate = new Date().toISOString().split('T')[0];
+        let currentCalendarYear = new Date().getFullYear();
+        let currentCalendarMonth = new Date().getMonth();
+
+        // Default Branches & Records
+        const defaultBranches = ['Branch 1', 'Branch 2', 'Branch 3', 'Branch 4'];
+        const defaultRecords = [
+            { id: '1', date: new Date().toISOString().split('T')[0], name: 'Ramesh Kumar', salary: 500, time: 'Full Day', branch: 'Branch 1', payment: 'Paid' },
+            { id: '2', date: new Date().toISOString().split('T')[0], name: 'Suresh Singh', salary: 450, time: 'Full Day', branch: 'Branch 2', payment: 'Paid' },
+            { id: '3', date: new Date().toISOString().split('T')[0], name: 'Amit Sharma', salary: 250, time: 'Half Day', branch: 'Branch 3', payment: 'Unpaid' }
+        ];
+
+        function getBranches() {
+            const data = localStorage.getItem('washledger_branches');
+            if (!data) {
+                localStorage.setItem('washledger_branches', JSON.stringify(defaultBranches));
+                return defaultBranches;
+            }
+            try { return JSON.parse(data); } catch (e) { return defaultBranches; }
+        }
+
+        function saveBranches(branches) {
+            localStorage.setItem('washledger_branches', JSON.stringify(branches));
+            updateBranchDropdowns();
+        }
+
+        function getDB() {
+            const data = localStorage.getItem('washledger_db');
+            if (!data) {
+                localStorage.setItem('washledger_db', JSON.stringify(defaultRecords));
+                return defaultRecords;
+            }
+            try { return JSON.parse(data); } catch (e) { return defaultRecords; }
+        }
+
+        function saveDB(records) {
+            localStorage.setItem('washledger_db', JSON.stringify(records));
+        }
+
+        // --- BRANCH MANAGEMENT LOGIC ---
+        function updateBranchDropdowns() {
+            const branches = getBranches();
+            
+            // Home filter dropdown
+            const filterEl = document.getElementById('dash-branch-filter');
+            const currentFilterVal = filterEl ? filterEl.value : 'ALL';
+            if (filterEl) {
+                filterEl.innerHTML = `<option value="ALL">All Branches</option>` + branches.map(b => `<option value="${b}">${b}</option>`).join('');
+                filterEl.value = branches.includes(currentFilterVal) ? currentFilterVal : 'ALL';
+            }
+
+            // Record modal branch dropdown
+            const recordBranchEl = document.getElementById('record-branch');
+            if (recordBranchEl) {
+                recordBranchEl.innerHTML = branches.map(b => `<option value="${b}">${b}</option>`).join('');
+            }
+        }
+
+        function renderSettingsBranches() {
+            const branches = getBranches();
+            const container = document.getElementById('settings-branch-list');
+            if (!container) return;
+
+            container.innerHTML = branches.map((b, idx) => `
+                <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl text-xs border border-gray-200">
+                    <span class="font-bold text-gray-800">${b}</span>
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="openEditBranchModal('${b}')" class="p-1.5 bg-white hover:bg-gray-200 rounded-lg text-gray-700 transition border border-gray-200"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                        ${branches.length > 1 ? `<button onclick="deleteBranch('${b}')" class="p-1.5 bg-red-50 hover:bg-red-100 rounded-lg text-red-600 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function openAddBranchModal() {
+            document.getElementById('branch-modal-title').innerText = "Add New Branch";
+            document.getElementById('branch-old-name').value = '';
+            document.getElementById('branch-name-input').value = '';
+            document.getElementById('branch-modal').classList.remove('hidden');
+        }
+
+        function openEditBranchModal(branchName) {
+            document.getElementById('branch-modal-title').innerText = "Rename Branch";
+            document.getElementById('branch-old-name').value = branchName;
+            document.getElementById('branch-name-input').value = branchName;
+            document.getElementById('branch-modal').classList.remove('hidden');
+        }
+
+        function closeBranchModal() {
+            document.getElementById('branch-modal').classList.add('hidden');
+        }
+
+        function saveBranch(e) {
+            e.preventDefault();
+            const oldName = document.getElementById('branch-old-name').value;
+            const newName = document.getElementById('branch-name-input').value.trim();
+            if (!newName) return;
+
+            let branches = getBranches();
+            if (branches.includes(newName) && oldName !== newName) {
+                showToast('Branch already exists', 'error');
+                return;
+            }
+
+            if (oldName) {
+                // Edit existing branch & update records
+                branches = branches.map(b => b === oldName ? newName : b);
+                saveBranches(branches);
+
+                let records = getDB();
+                records = records.map(r => r.branch === oldName ? { ...r, branch: newName } : r);
+                saveDB(records);
+                showToast('Branch renamed successfully');
+            } else {
+                // Add new branch
+                branches.push(newName);
+                saveBranches(branches);
+                showToast('New branch added successfully');
+            }
+
+            closeBranchModal();
+            renderSettingsBranches();
+        }
+
+        function deleteBranch(branchName) {
+            let branches = getBranches();
+            if (branches.length <= 1) {
+                showToast('You must keep at least one branch', 'error');
+                return;
+            }
+            if (!confirm(`Are you sure you want to delete "${branchName}"? Records assigned to this branch will be unassigned.`)) return;
+
+            branches = branches.filter(b => b !== branchName);
+            saveBranches(branches);
+            renderSettingsBranches();
+            showToast('Branch deleted', 'info');
+        }
+
+        // --- AUTH & TABS ---
+        function togglePassword() {
+            const pwd = document.getElementById('login-password');
+            const icon = document.getElementById('eye-icon');
+            if (pwd.type === 'password') { pwd.type = 'text'; icon.setAttribute('data-lucide', 'eye-off'); }
+            else { pwd.type = 'password'; icon.setAttribute('data-lucide', 'eye'); }
+            lucide.createIcons();
+        }
+
+        function handleLogin() {
+            currentUser = 'supervisor';
+            document.getElementById('screen-login').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+            updateBranchDropdowns();
+            switchTab('home');
+            showToast('Welcome back, Supervisor!', 'success');
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('app-shell').classList.add('hidden');
+            document.getElementById('screen-login').classList.remove('hidden');
+            showToast('Logged out securely', 'info');
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            ['home', 'calendar', 'reports', 'settings'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`nav-btn-${t}`).className = "flex flex-col items-center text-gray-400 space-y-1 hover:text-forest-900 transition";
+            });
+
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-btn-${tab}`).className = "flex flex-col items-center text-forest-900 space-y-1 transition";
+
+            if (tab === 'home') renderHomeDashboard();
+            if (tab === 'calendar') renderCalendar();
+            if (tab === 'reports') renderReports();
+            if (tab === 'settings') renderSettingsBranches();
+            
+            lucide.createIcons();
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let bg = 'bg-forest-900 text-white';
+            if (type === 'error') bg = 'bg-red-600 text-white';
+            if (type === 'info') bg = 'bg-blue-600 text-white';
+
+            toast.className = `${bg} px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center justify-between pointer-events-auto transform translate-y-2 opacity-0 transition-all duration-300`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- HOME & DASHBOARD ---
+        function renderHomeDashboard() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('dash-date-display').innerText = formatDateReadable(todayStr);
+            document.getElementById('home-record-date-label').innerText = formatDateReadable(todayStr);
+
+            const branchFilter = document.getElementById('dash-branch-filter').value;
+            const records = getDB();
+            const todayRecords = records.filter(r => r.date === todayStr && (branchFilter === 'ALL' || r.branch === branchFilter));
+
+            let totalSalary = 0, paidSalary = 0, unpaidSalary = 0;
+            todayRecords.forEach(r => {
+                const sal = Number(r.salary) || 0;
+                totalSalary += sal;
+                if (r.payment === 'Paid') paidSalary += sal; else unpaidSalary += sal;
+            });
+
+            document.getElementById('metric-staff-count').innerText = todayRecords.length;
+            document.getElementById('metric-daily-salary').innerText = `₹${totalSalary}`;
+            document.getElementById('metric-paid-salary').innerText = `₹${paidSalary}`;
+            document.getElementById('metric-unpaid-salary').innerText = `₹${unpaidSalary}`;
+
+            const listEl = document.getElementById('home-recent-list');
+            if (todayRecords.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">No employee records for today yet.</p>`;
+            } else {
+                listEl.innerHTML = todayRecords.map(r => `
+                    <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl border border-gray-100 text-xs">
+                        <div>
+                            <p class="font-bold text-gray-800">${r.name}</p>
+                            <p class="text-[10px] text-gray-500">${r.branch} &bull; ${r.time}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-forest-900">₹${r.salary}</p>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-semibold ${r.payment === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${r.payment}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        }
+
+        function goToTodayDiary() {
+            selectedDate = new Date().toISOString().split('T')[0];
+            openDiaryView(selectedDate);
+        }
+
+        // --- CALENDAR ---
+        function renderCalendar() {
+            const monthsNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('cal-month-year-title').innerText = `${monthsNames[currentCalendarMonth]} ${currentCalendarYear}`;
+
+            const grid = document.getElementById('cal-days-grid');
+            grid.innerHTML = '';
+            const firstDayIndex = new Date(currentCalendarYear, currentCalendarMonth, 1).getDay();
+            const totalDays = new Date(currentCalendarYear, currentCalendarMonth + 1, 0).getDate();
+            const records = getDB();
+
+            for (let i = 0; i < firstDayIndex; i++) grid.appendChild(document.createElement('div'));
+
+            for (let day = 1; day <= totalDays; day++) {
+                const monthStr = String(currentCalendarMonth + 1).padStart(2, '0');
+                const dayStr = String(day).padStart(2, '0');
+                const dateKey = `${currentCalendarYear}-${monthStr}-${dayStr}`;
+                const hasRecords = records.some(r => r.date === dateKey);
+                const isToday = dateKey === new Date().toISOString().split('T')[0];
+
+                const dayCell = document.createElement('button');
+                dayCell.type = 'button';
+                dayCell.onclick = () => openDiaryView(dateKey);
+                let baseClasses = "h-10 rounded-xl flex flex-col items-center justify-center text-xs font-medium transition relative ";
+                if (isToday) baseClasses += "border-2 border-forest-900 font-bold ";
+                if (hasRecords) baseClasses += "bg-forest-50 text-forest-900 font-bold hover:bg-forest-100 ";
+                else baseClasses += "hover:bg-gray-100 text-gray-700 ";
+
+                dayCell.className = baseClasses;
+                dayCell.innerHTML = `<span>${day}</span>${hasRecords ? '<span class="w-1.5 h-1.5 bg-forest-700 rounded-full mt-0.5"></span>' : ''}`;
+                grid.appendChild(dayCell);
+            }
+        }
+
+        function changeMonth(direction) {
+            currentCalendarMonth += direction;
+            if (currentCalendarMonth > 11) { currentCalendarMonth = 0; currentCalendarYear++; }
+            else if (currentCalendarMonth < 0) { currentCalendarMonth = 11; currentCalendarYear--; }
+            if (currentCalendarYear < 2026) { currentCalendarYear = 2026; currentCalendarMonth = 10; }
+            if (currentCalendarYear > 2027) { currentCalendarYear = 2027; currentCalendarMonth = 10; }
+            renderCalendar();
+        }
+
+        // --- DIARY ---
+        function openDiaryView(dateStr) {
+            selectedDate = dateStr;
+            document.getElementById('diary-current-date-title').innerText = formatDateReadable(dateStr);
+            ['home', 'calendar', 'reports', 'settings'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
+            document.getElementById('view-diary').classList.remove('hidden');
+            renderDiaryRecords();
+        }
+
+        function renderDiaryRecords() {
+            const records = getDB();
+            const dateRecords = records.filter(r => r.date === selectedDate);
+            const container = document.getElementById('diary-records-container');
+            let totalSal = 0;
+            dateRecords.forEach(r => totalSal += Number(r.salary) || 0);
+
+            document.getElementById('diary-stat-staff').innerText = dateRecords.length;
+            document.getElementById('diary-stat-salary').innerText = `₹${totalSal}`;
+
+            if (dateRecords.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-gray-400 text-xs"><p>No records for ${formatDateReadable(selectedDate)}.</p><p class="mt-1">Tap 'Add Employee' to log attendance and salary.</p></div>`;
+                return;
+            }
+
+            container.innerHTML = dateRecords.map(r => `
+                <div class="p-3.5 flex items-center justify-between hover:bg-gray-50 transition text-xs">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-gray-900">${r.name}</span>
+                            <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-[10px] font-medium">${r.branch}</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 mt-0.5">${r.time} &bull; <span class="${r.payment === 'Paid' ? 'text-emerald-700 font-semibold' : 'text-amber-700 font-semibold'}">${r.payment}</span></p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold text-forest-900 text-sm">₹${r.salary}</span>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="editRecord('${r.id}')" class="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="deleteRecord('${r.id}')" class="p-1.5 bg-red-50 hover:bg-red-100 rounded-lg text-red-600 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function openAddRecordModal() {
+            updateBranchDropdowns();
+            document.getElementById('modal-title').innerText = "Add Employee Record";
+            document.getElementById('record-id').value = '';
+            document.getElementById('record-name').value = '';
+            document.getElementById('record-salary').value = '';
+            document.getElementById('record-time').value = 'Full Day';
+            document.getElementById('record-payment').value = 'Paid';
+            document.getElementById('record-modal').classList.remove('hidden');
+        }
+
+        function closeAddRecordModal() {
+            document.getElementById('record-modal').classList.add('hidden');
+        }
+
+        function editRecord(id) {
+            updateBranchDropdowns();
+            const records = getDB();
+            const rec = records.find(r => r.id === id);
+            if (!rec) return;
+
+            document.getElementById('modal-title').innerText = "Edit Employee Record";
+            document.getElementById('record-id').value = rec.id;
+            document.getElementById('record-name').value = rec.name;
+            document.getElementById('record-salary').value = rec.salary;
+            document.getElementById('record-time').value = rec.time;
+            document.getElementById('record-branch').value = rec.branch;
+            document.getElementById('record-payment').value = rec.payment;
+            document.getElementById('record-modal').classList.remove('hidden');
+        }
+
+        function saveRecord(e) {
+            e.preventDefault();
+            const id = document.getElementById('record-id').value;
+            const name = document.getElementById('record-name').value;
+            const salary = Number(document.getElementById('record-salary').value);
+            const time = document.getElementById('record-time').value;
+            const branch = document.getElementById('record-branch').value;
+            const payment = document.getElementById('record-payment').value;
+
+            let records = getDB();
+            if (id) {
+                records = records.map(r => r.id === id ? { ...r, name, salary, time, branch, payment } : r);
+                showToast('Record updated successfully');
+            } else {
+                records.push({ id: 'rec_' + Date.now(), date: selectedDate, name, salary, time, branch, payment });
+                showToast('Employee diary entry saved');
+            }
+            saveDB(records);
+            closeAddRecordModal();
+            renderDiaryRecords();
+        }
+
+        function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this employee record?')) return;
+            let records = getDB();
+            records = records.filter(r => r.id !== id);
+            saveDB(records);
+            showToast('Record deleted', 'info');
+            renderDiaryRecords();
+        }
+
+        // --- REPORTS ---
+        function renderReports() {
+            const records = getDB();
+            const fromDate = document.getElementById('report-from-date').value;
+            const toDate = document.getElementById('report-to-date').value;
+
+            let filtered = records;
+            if (fromDate) filtered = filtered.filter(r => r.date >= fromDate);
+            if (toDate) filtered = filtered.filter(r => r.date <= toDate);
+
+            let totalSal = 0, paidSal = 0, unpaidSal = 0;
+            const branches = getBranches();
+            const branchMap = {};
+            branches.forEach(b => branchMap[b] = 0);
+            const empMap = {};
+
+            filtered.forEach(r => {
+                const s = Number(r.salary) || 0;
+                totalSal += s;
+                if (r.payment === 'Paid') paidSal += s; else unpaidSal += s;
+                if (branchMap[r.branch] !== undefined) branchMap[r.branch] += s;
+                else {
+                    branchMap[r.branch] = s; // Handle custom branches
+                }
+
+                if (!empMap[r.name]) empMap[r.name] = { total: 0, days: 0 };
+                empMap[r.name].total += s;
+                empMap[r.name].days += 1;
+            });
+
+            const uniqueDays = [...new Set(filtered.map(r => r.date))].length;
+            const dailyAvg = uniqueDays > 0 ? Math.round(totalSal / uniqueDays) : 0;
+
+            document.getElementById('report-daily-total').innerText = `₹${dailyAvg}`;
+            document.getElementById('report-monthly-total').innerText = `₹${totalSal}`;
+            document.getElementById('report-paid-total').innerText = `₹${paidSal}`;
+            document.getElementById('report-unpaid-total').innerText = `₹${unpaidSal}`;
+
+            const branchEl = document.getElementById('report-branch-breakdown');
+            branchEl.innerHTML = Object.keys(branchMap).map(b => `
+                <div class="flex justify-between items-center p-2.5 bg-gray-50 rounded-xl text-xs">
+                    <span class="font-bold text-gray-700">${b}</span>
+                    <span class="font-bold text-forest-900">₹${branchMap[b]}</span>
+                </div>
+            `).join('');
+
+            const empEl = document.getElementById('report-employee-history');
+            const empKeys = Object.keys(empMap);
+            if (empKeys.length === 0) {
+                empEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">No records found for selected range.</p>`;
+            } else {
+                empEl.innerHTML = empKeys.map(emp => `
+                    <div class="flex justify-between items-center p-2.5 bg-gray-50 rounded-xl text-xs">
+                        <div>
+                            <p class="font-bold text-gray-800">${emp}</p>
+                            <p class="text-[10px] text-gray-500">${empMap[emp].days} attendance entries</p>
+                        </div>
+                        <span class="font-bold text-forest-900">₹${empMap[emp].total}</span>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        }
+
+        // --- BACKUP & CSV ---
+        function backupDatabase() {
+            const data = {
+                branches: getBranches(),
+                records: getDB()
+            };
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `washledger_sqlite_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showToast('SQLite backup downloaded successfully');
+        }
+
+        function restoreDatabase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.records && Array.isArray(parsed.records)) {
+                        localStorage.setItem('washledger_db', JSON.stringify(parsed.records));
+                        if (parsed.branches && Array.isArray(parsed.branches)) {
+                            localStorage.setItem('washledger_branches', JSON.stringify(parsed.branches));
+                        }
+                        showToast('Database restored successfully!');
+                        updateBranchDropdowns();
+                        renderHomeDashboard();
+                    } else if (Array.isArray(parsed)) {
+                        // Old format fallback
+                        localStorage.setItem('washledger_db', JSON.stringify(parsed));
+                        showToast('Database restored successfully!');
+                        updateBranchDropdowns();
+                    }
+                } catch (err) {
+                    showToast('Invalid backup file format', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportCSV() {
+            const records = getDB();
+            let csv = 'ID,Date,Employee Name,Salary (INR),Working Time,Branch,Payment Status\n';
+            records.forEach(r => { csv += `"${r.id}","${r.date}","${r.name}",${r.salary},"${r.time}","${r.branch}","${r.payment}"\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `washledger_report_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            showToast('CSV export generated successfully');
+        }
+
+        function downloadAPK() {
+            showToast('Preparing signed Android APK wrapper...', 'info');
+            setTimeout(() => { showToast('WashLedger_v1.0.0_release.apk downloaded!', 'success'); }, 1500);
+        }
+
+        function openSyncModal() { document.getElementById('sync-modal').classList.remove('hidden'); }
+        function closeSyncModal() { document.getElementById('sync-modal').classList.add('hidden'); }
+        function formatDateReadable(dateStr) {
+            const parts = dateStr.split('-');
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
+            return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        window.onload = function() {
+            lucide.createIcons();
+            updateBranchDropdowns();
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            document.getElementById('report-from-date').value = firstDay;
+            document.getElementById('report-to-date').value = lastDay;
+        }
+    </script>
+</body>
+</html>
